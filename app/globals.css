@@ -2,7 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-gray-900 text-gray-100;
+:root {
+  --foreground-rgb: 200, 192, 147;
+  --background-rgb: 31, 31, 40;
+  --accent-rgb: 230, 195, 132;
+  --muted-rgb: 124, 124, 124;
+}
+
+@font-face {
+  font-family: 'Cascadia';
+  src: url('/fonts/CascadiaCode.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  body {
+    @apply bg-[#1f1f28] text-[#c8c093];
+    font-family: 'Cascadia', Arial, sans-serif;
+  }
+
+  h1 {
+    @apply text-[#e6c384];
+  }
 }
 
