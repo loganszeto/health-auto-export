@@ -13,12 +13,11 @@ export async function OPTIONS() {
   return NextResponse.json({}, { headers: corsHeaders });
 }
 
-// Get the most recent health data
+// Get all health data (for processing historical metrics)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '1');
-    const days = parseInt(searchParams.get('days') || '30');
+    const days = parseInt(searchParams.get('days') || '365'); // Default to 1 year
 
     const { db } = await connectToDatabase();
     const collection = db.collection('health-data');
@@ -27,13 +26,12 @@ export async function GET(request: NextRequest) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // Get most recent data within date range
+    // Get all data within date range (sorted by most recent first)
     const data = await collection
       .find({
         timestamp: { $gte: startDate }
       })
       .sort({ timestamp: -1 })
-      .limit(limit)
       .toArray();
 
     return NextResponse.json({
