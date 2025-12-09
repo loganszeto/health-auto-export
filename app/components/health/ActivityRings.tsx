@@ -32,8 +32,9 @@ export default function ActivityRings({
   const exerciseColor = '#00d9ff'; // Green
   const standColor = '#ffd60a'; // Yellow
   
-  // SVG dimensions
-  const size = 200;
+  // SVG dimensions - increased to ensure rings are fully visible
+  const size = 240;
+  const padding = 20; // Padding to prevent clipping
   const center = size / 2;
   const radius = 70;
   const strokeWidth = 12;
@@ -43,13 +44,24 @@ export default function ActivityRings({
   const circumference = 2 * Math.PI * radius;
   
   // Ring positions (concentric circles)
-  const moveRadius = radius;
+  // Stand is innermost, Move is outermost
+  const standRadius = radius;
   const exerciseRadius = radius + ringSpacing;
-  const standRadius = radius + ringSpacing * 2;
+  const moveRadius = radius + ringSpacing * 2;
+  
+  // Calculate max radius to ensure everything fits
+  const maxRadius = moveRadius + strokeWidth / 2;
+  const viewBoxSize = (maxRadius + padding) * 2;
   
   return (
     <div className="flex flex-col items-center">
-      <svg width={size} height={size} className="transform -rotate-90">
+      <svg 
+        width={size} 
+        height={size} 
+        viewBox={`${center - viewBoxSize/2} ${center - viewBoxSize/2} ${viewBoxSize} ${viewBoxSize}`}
+        className="transform -rotate-90"
+        style={{ overflow: 'visible' }}
+      >
         {/* Move Ring (outermost) */}
         <circle
           cx={center}

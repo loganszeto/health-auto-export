@@ -31,9 +31,12 @@ export default function HealthDashboard() {
       // Process raw data into daily metrics
       const processed = processDailyMetrics(rawData);
       setDailyMetrics(processed);
-      // Set selected date to most recent
+      // Set selected date to today (current day)
       if (processed.length > 0) {
-        setSelectedDateIndex(0);
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+        const todayIndex = processed.findIndex(d => d.date === today);
+        // If today exists in data, use it; otherwise use the most recent date
+        setSelectedDateIndex(todayIndex >= 0 ? todayIndex : 0);
       }
     }
   }, [rawData]);
@@ -61,14 +64,16 @@ export default function HealthDashboard() {
   };
 
   const handlePreviousDay = () => {
-    if (selectedDateIndex < dailyMetrics.length - 1) {
-      setSelectedDateIndex(selectedDateIndex + 1);
+    // Go backwards in time (to older dates) = decrease index
+    if (selectedDateIndex > 0) {
+      setSelectedDateIndex(selectedDateIndex - 1);
     }
   };
 
   const handleNextDay = () => {
-    if (selectedDateIndex > 0) {
-      setSelectedDateIndex(selectedDateIndex - 1);
+    // Go forwards in time (to newer dates) = increase index
+    if (selectedDateIndex < dailyMetrics.length - 1) {
+      setSelectedDateIndex(selectedDateIndex + 1);
     }
   };
 
@@ -107,8 +112,8 @@ export default function HealthDashboard() {
         dailyData={selectedDay}
         onPreviousDay={handlePreviousDay}
         onNextDay={handleNextDay}
-        canGoPrevious={selectedDateIndex < dailyMetrics.length - 1}
-        canGoNext={selectedDateIndex > 0}
+        canGoPrevious={selectedDateIndex > 0}
+        canGoNext={selectedDateIndex < dailyMetrics.length - 1}
       />
 
       {/* Section B: Historical Averages */}
