@@ -35,8 +35,8 @@ export default function HealthDashboard() {
       if (processed.length > 0) {
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
         const todayIndex = processed.findIndex(d => d.date === today);
-        // If today exists in data, use it; otherwise use the most recent date
-        setSelectedDateIndex(todayIndex >= 0 ? todayIndex : 0);
+        // If today exists in data, use it; otherwise use the most recent date (last entry)
+        setSelectedDateIndex(todayIndex >= 0 ? todayIndex : processed.length - 1);
       }
     }
   }, [rawData]);
