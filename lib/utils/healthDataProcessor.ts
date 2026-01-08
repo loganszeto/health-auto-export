@@ -112,14 +112,41 @@ export function processDailyMetrics(allData: StoredHealthData[]): DailyHealthMet
   
   // Process each date
   return dates.map(date => {
-    // Get all metrics from the most recent data entry (or merge across entries)
-    // For simplicity, use the latest entry's metrics
-    const latestEntry = allData[0];
-    if (!latestEntry) {
-      return createEmptyDailyMetrics(date);
-    }
+    // Merge metrics from ALL entries, not just the latest
+    // Each export may contain different date ranges, so we need to combine them
+    const allMetricsMap = new Map<string, HealthMetric>();
     
-    const metrics = latestEntry.metrics;
+    // Collect all metrics from all entries
+    allData.forEach(entry => {
+      entry.metrics.forEach(metric => {
+        const existingMetric = allMetricsMap.get(metric.name);
+        if (existingMetric) {
+          // Merge data points - combine arrays and deduplicate by date
+          const existingDates = new Set(existingMetric.data.map(d => normalizeDate(d.date)));
+          metric.data.forEach(dataPoint => {
+            const normalizedDate = normalizeDate(dataPoint.date);
+            if (!existingDates.has(normalizedDate)) {
+              existingMetric.data.push(dataPoint);
+              existingDates.add(normalizedDate);
+            }
+          });
+          // Sort by date
+          existingMetric.data.sort((a, b) => 
+            new Date(a.date).getTime() - new Date(b.date).getTime()
+          );
+        } else {
+          // First time seeing this metric, add it
+          allMetricsMap.set(metric.name, {
+            name: metric.name,
+            units: metric.units,
+            data: [...metric.data],
+          });
+        }
+      });
+    });
+    
+    // Convert map to array
+    const metrics = Array.from(allMetricsMap.values());
     
     // Activity metrics (sum for totals)
     const activeCalories = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.activeCalories, 'sum');
