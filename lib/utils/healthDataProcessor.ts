@@ -124,9 +124,10 @@ function aggregateDailyValue(
  * Process raw health data into daily metrics
  */
 export function processDailyMetrics(allData: StoredHealthData[]): DailyHealthMetrics[] {
-  if (!allData || allData.length === 0) {
-    return [];
-  }
+  try {
+    if (!allData || allData.length === 0) {
+      return [];
+    }
   
   // Collect all unique dates from all metrics
   const dateSet = new Set<string>();
@@ -253,7 +254,7 @@ export function processDailyMetrics(allData: StoredHealthData[]): DailyHealthMet
         }
       });
       
-      standHours = hoursWithStand > 0 ? hoursWithStand : null;
+      standHours = hoursWithStand; // 0 is a valid value (no stand hours)
     }
     
     // Heart metrics (average for rates, min/max for extremes)
@@ -299,6 +300,12 @@ export function processDailyMetrics(allData: StoredHealthData[]): DailyHealthMet
       vo2Max,
     };
   });
+  } catch (error) {
+    console.error('Error in processDailyMetrics:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+    // Return empty array on error to prevent crash
+    return [];
+  }
 }
 
 function createEmptyDailyMetrics(date: string): DailyHealthMetrics {
