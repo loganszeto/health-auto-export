@@ -24,9 +24,27 @@ function normalizeDate(dateString: string): string {
  * Find metric by name using fuzzy matching
  */
 function findMetric(metrics: HealthMetric[], names: string[]): HealthMetric | null {
+  if (!metrics || metrics.length === 0) return null;
+  
   for (const name of names) {
-    const metric = metrics.find(m => 
-      m.name.toLowerCase().replace(/_/g, '') === name.toLowerCase().replace(/_/g, '')
+    // Try exact match first
+    let metric = metrics.find(m => 
+      m.name && m.name.toLowerCase() === name.toLowerCase()
+    );
+    if (metric) return metric;
+    
+    // Try match without underscores
+    metric = metrics.find(m => 
+      m.name && m.name.toLowerCase().replace(/_/g, '') === name.toLowerCase().replace(/_/g, '')
+    );
+    if (metric) return metric;
+    
+    // Try partial match (contains)
+    metric = metrics.find(m => 
+      m.name && (
+        m.name.toLowerCase().includes(name.toLowerCase()) ||
+        name.toLowerCase().includes(m.name.toLowerCase())
+      )
     );
     if (metric) return metric;
   }
@@ -97,18 +115,30 @@ function aggregateDailyValue(
  * Process raw health data into daily metrics
  */
 export function processDailyMetrics(allData: StoredHealthData[]): DailyHealthMetrics[] {
+  if (!allData || allData.length === 0) {
+    return [];
+  }
+  
   // Collect all unique dates from all metrics
   const dateSet = new Set<string>();
   
   allData.forEach(entry => {
+    if (!entry.metrics) return;
     entry.metrics.forEach(metric => {
+      if (!metric.data || metric.data.length === 0) return;
       metric.data.forEach(d => {
-        dateSet.add(normalizeDate(d.date));
+        if (d && d.date) {
+          dateSet.add(normalizeDate(d.date));
+        }
       });
     });
   });
   
   const dates = Array.from(dateSet).sort(); // Oldest first (ascending)
+  
+  if (dates.length === 0) {
+    return [];
+  }
   
   // Process each date
   return dates.map(date => {
@@ -117,20 +147,30 @@ export function processDailyMetrics(allData: StoredHealthData[]): DailyHealthMet
     const allMetricsMap = new Map<string, HealthMetric>();
     
     // Collect all metrics from all entries
-    allData.forEach(entry => {
+    // Process in reverse order (most recent first) so latest values take precedence
+    [...allData].reverse().forEach(entry => {
+      if (!entry.metrics) return;
       entry.metrics.forEach(metric => {
+        if (!metric.data || metric.data.length === 0) return;
+        
         const existingMetric = allMetricsMap.get(metric.name);
         if (existingMetric) {
-          // Merge data points - combine arrays and deduplicate by date
-          const existingDates = new Set(existingMetric.data.map(d => normalizeDate(d.date)));
-          metric.data.forEach(dataPoint => {
-            const normalizedDate = normalizeDate(dataPoint.date);
-            if (!existingDates.has(normalizedDate)) {
-              existingMetric.data.push(dataPoint);
-              existingDates.add(normalizedDate);
-            }
+          // Merge data points - for same date, keep the latest value (from most recent export)
+          const existingDataMap = new Map<string, { date: string; qty: number }>();
+          existingMetric.data.forEach(d => {
+            const normalizedDate = normalizeDate(d.date);
+            existingDataMap.set(normalizedDate, d);
           });
-          // Sort by date
+          
+          // Add new data points, overwriting existing ones for the same date (latest wins)
+          metric.data.forEach(dataPoint => {
+            if (!dataPoint || !dataPoint.date) return;
+            const normalizedDate = normalizeDate(dataPoint.date);
+            existingDataMap.set(normalizedDate, dataPoint);
+          });
+          
+          // Convert map back to array and sort by date
+          existingMetric.data = Array.from(existingDataMap.values());
           existingMetric.data.sort((a, b) => 
             new Date(a.date).getTime() - new Date(b.date).getTime()
           );
@@ -139,7 +179,7 @@ export function processDailyMetrics(allData: StoredHealthData[]): DailyHealthMet
           allMetricsMap.set(metric.name, {
             name: metric.name,
             units: metric.units,
-            data: [...metric.data],
+            data: metric.data.filter(d => d && d.date), // Filter out invalid entries
           });
         }
       });
@@ -148,13 +188,27 @@ export function processDailyMetrics(allData: StoredHealthData[]): DailyHealthMet
     // Convert map to array
     const metrics = Array.from(allMetricsMap.values());
     
-    // Activity metrics (sum for totals)
-    const activeCalories = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.activeCalories, 'sum');
-    const exerciseMinutes = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.exerciseMinutes, 'sum');
-    const standHours = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.standHours, 'sum');
-    const steps = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.steps, 'sum');
-    const distance = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.distance, 'sum');
-    const flightsClimbed = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.flightsClimbed, 'sum');
+    // Activity metrics - Apple Health stores daily totals as single values per day
+    // Use 'max' to get the final/highest value (handles multiple exports for same day)
+    const activeCalories = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.activeCalories, 'max');
+    const exerciseMinutes = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.exerciseMinutes, 'max');
+    
+    // Stand hours - handle unit conversion (might be in minutes)
+    let standHours = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.standHours, 'max');
+    if (standHours !== null) {
+      // If value is > 12 hours, it's likely in minutes - convert it
+      if (standHours > 12) {
+        standHours = standHours / 60;
+      }
+      // Cap at 24 hours (safety limit)
+      if (standHours > 24) {
+        standHours = 24;
+      }
+    }
+    
+    const steps = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.steps, 'max');
+    const distance = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.distance, 'max');
+    const flightsClimbed = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.flightsClimbed, 'max');
     
     // Heart metrics (average for rates, min/max for extremes)
     const restingHeartRate = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.restingHeartRate, 'avg');
