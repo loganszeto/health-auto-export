@@ -108,7 +108,7 @@ export function processDailyMetrics(allData: StoredHealthData[]): DailyHealthMet
     });
   });
   
-  const dates = Array.from(dateSet).sort().reverse(); // Most recent first
+  const dates = Array.from(dateSet).sort(); // Oldest first (ascending)
   
   // Process each date
   return dates.map(date => {

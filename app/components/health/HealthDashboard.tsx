@@ -14,59 +14,72 @@ export default function HealthDashboard() {
   const [rawData, setRawData] = useState<StoredHealthData[]>([]);
   const [dailyMetrics, setDailyMetrics] = useState<DailyHealthMetrics[]>([]);
   const [selectedDateIndex, setSelectedDateIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchHealthData();
-    // Refresh every 5 minutes
-    const interval = setInterval(fetchHealthData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    // Fetch data after component mounts
+    const timer = setTimeout(() => {
+      fetchHealthData();
+    }, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (rawData.length > 0) {
-      // Process raw data into daily metrics
-      const processed = processDailyMetrics(rawData);
-      setDailyMetrics(processed);
-      // Set selected date to most recent day (index 0, since dates are sorted descending)
-      if (processed.length > 0) {
-        setSelectedDateIndex(0);
+      try {
+        const processed = processDailyMetrics(rawData);
+        if (processed.length > 0) {
+          setDailyMetrics(processed);
+          // Set to most recent day (last index since dates are ascending)
+          setSelectedDateIndex(processed.length - 1);
+        } else {
+          setDailyMetrics([]);
+        }
+      } catch (error) {
+        console.error('Error processing data:', error);
+        setError('Error processing health data');
+        setDailyMetrics([]);
       }
     }
   }, [rawData]);
 
   const fetchHealthData = async () => {
     try {
-      const response = await fetch('/api/data?days=365'); // Fetch 1 year of data
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch('/api/data?days=30');
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch health data');
+        throw new Error(`HTTP ${response.status}`);
       }
+      
       const result = await response.json();
       
       if (result.success && result.data && result.data.length > 0) {
         setRawData(result.data);
-        setError(null);
       } else {
-        setError('No health data available yet. Make sure Health Auto Export is configured and syncing.');
+        setError('No health data available. Make sure Health Auto Export is configured and syncing.');
+        setRawData([]);
       }
     } catch (err) {
-      setError('Error loading health data. Please try again later.');
-      console.error(err);
+      setError(`Error loading health data: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setRawData([]);
     } finally {
       setLoading(false);
     }
   };
 
   const handlePreviousDay = () => {
-    // Go backwards in time (to older dates) = decrease index
+    // Previous = go to older date = decrease index (dates are ascending)
     if (selectedDateIndex > 0) {
       setSelectedDateIndex(selectedDateIndex - 1);
     }
   };
 
   const handleNextDay = () => {
-    // Go forwards in time (to newer dates) = increase index
+    // Next = go to newer date = increase index (dates are ascending)
     if (selectedDateIndex < dailyMetrics.length - 1) {
       setSelectedDateIndex(selectedDateIndex + 1);
     }
@@ -84,6 +97,12 @@ export default function HealthDashboard() {
     return (
       <div className="border-t border-[#2a2a2a] pt-8">
         <p className="text-[#969696]">{error}</p>
+        <button
+          onClick={fetchHealthData}
+          className="mt-4 px-4 py-2 bg-[#2a2a2a] text-[#c8c8c8] rounded hover:bg-[#3a3a3a] transition-colors text-sm"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -92,6 +111,12 @@ export default function HealthDashboard() {
     return (
       <div className="border-t border-[#2a2a2a] pt-8">
         <p className="text-[#969696]">No processed health data available.</p>
+        <button
+          onClick={fetchHealthData}
+          className="mt-4 px-4 py-2 bg-[#2a2a2a] text-[#c8c8c8] rounded hover:bg-[#3a3a3a] transition-colors text-sm"
+        >
+          Refresh
+        </button>
       </div>
     );
   }
@@ -101,7 +126,6 @@ export default function HealthDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Section A: Daily Summary */}
       <DailySummary
         dailyData={selectedDay}
         onPreviousDay={handlePreviousDay}
@@ -110,7 +134,6 @@ export default function HealthDashboard() {
         canGoNext={selectedDateIndex < dailyMetrics.length - 1}
       />
 
-      {/* Time Series Chart */}
       <TimeSeriesChart data={timeSeriesData} />
     </div>
   );
