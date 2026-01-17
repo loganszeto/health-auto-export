@@ -10,6 +10,7 @@ import { DailyHealthMetrics, HistoricalStats, TimeSeriesDataPoint, METRIC_MAPPIN
 
 /**
  * Normalize date to local timezone YYYY-MM-DD format
+ * Handles timezone correctly - uses the date in the user's local timezone
  */
 function normalizeDate(dateString: string): string {
   const date = new Date(dateString);
@@ -18,6 +19,14 @@ function normalizeDate(dateString: string): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+/**
+ * Get hour (0-23) from date string in local timezone
+ */
+function getLocalHour(dateString: string): number {
+  const date = new Date(dateString);
+  return date.getHours();
 }
 
 /**
@@ -147,30 +156,27 @@ export function processDailyMetrics(allData: StoredHealthData[]): DailyHealthMet
     const allMetricsMap = new Map<string, HealthMetric>();
     
     // Collect all metrics from all entries
-    // Process in reverse order (most recent first) so latest values take precedence
-    [...allData].reverse().forEach(entry => {
+    // For bucketed data, we need to keep ALL data points (they're incremental contributions)
+    allData.forEach(entry => {
       if (!entry.metrics) return;
       entry.metrics.forEach(metric => {
         if (!metric.data || metric.data.length === 0) return;
         
         const existingMetric = allMetricsMap.get(metric.name);
         if (existingMetric) {
-          // Merge data points - for same date, keep the latest value (from most recent export)
-          const existingDataMap = new Map<string, { date: string; qty: number }>();
-          existingMetric.data.forEach(d => {
-            const normalizedDate = normalizeDate(d.date);
-            existingDataMap.set(normalizedDate, d);
-          });
-          
-          // Add new data points, overwriting existing ones for the same date (latest wins)
+          // Merge data points - keep ALL data points (they're bucketed contributions to be summed)
+          // Only filter out exact duplicates (same timestamp AND same value)
           metric.data.forEach(dataPoint => {
             if (!dataPoint || !dataPoint.date) return;
-            const normalizedDate = normalizeDate(dataPoint.date);
-            existingDataMap.set(normalizedDate, dataPoint);
+            // Check if this exact data point already exists
+            const isDuplicate = existingMetric.data.some(
+              d => d.date === dataPoint.date && Math.abs(d.qty - dataPoint.qty) < 0.0001
+            );
+            if (!isDuplicate) {
+              existingMetric.data.push(dataPoint);
+            }
           });
-          
-          // Convert map back to array and sort by date
-          existingMetric.data = Array.from(existingDataMap.values());
+          // Sort by date/time
           existingMetric.data.sort((a, b) => 
             new Date(a.date).getTime() - new Date(b.date).getTime()
           );
@@ -188,27 +194,67 @@ export function processDailyMetrics(allData: StoredHealthData[]): DailyHealthMet
     // Convert map to array
     const metrics = Array.from(allMetricsMap.values());
     
-    // Activity metrics - Apple Health stores daily totals as single values per day
-    // Use 'max' to get the final/highest value (handles multiple exports for same day)
-    const activeCalories = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.activeCalories, 'max');
-    const exerciseMinutes = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.exerciseMinutes, 'max');
+    // Activity metrics - these are BUCKETED CONTRIBUTIONS that need to be SUMMED
+    // Each data point is an incremental contribution to the daily total
+    let activeCalories = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.activeCalories, 'sum');
+    if (activeCalories !== null) {
+      activeCalories = Math.round(activeCalories); // Round to whole kcal
+    }
     
-    // Stand hours - handle unit conversion (might be in minutes)
-    let standHours = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.standHours, 'max');
-    if (standHours !== null) {
-      // If value is > 12 hours, it's likely in minutes - convert it
-      if (standHours > 12) {
-        standHours = standHours / 60;
-      }
-      // Cap at 24 hours (safety limit)
-      if (standHours > 24) {
-        standHours = 24;
+    let exerciseMinutes = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.exerciseMinutes, 'sum');
+    if (exerciseMinutes !== null) {
+      exerciseMinutes = Math.round(exerciseMinutes); // Round to whole minutes
+    }
+    
+    let steps = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.steps, 'sum');
+    if (steps !== null) {
+      steps = Math.round(steps); // Round to whole steps
+    }
+    
+    // Distance - convert from miles to meters if needed
+    let distance = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.distance, 'sum');
+    if (distance !== null) {
+      const distanceMetric = findMetric(metrics, METRIC_MAPPINGS.distance);
+      if (distanceMetric && distanceMetric.units) {
+        const unitsLower = distanceMetric.units.toLowerCase();
+        // If in miles, convert to meters
+        if (unitsLower.includes('mi') || unitsLower === 'mile' || unitsLower === 'miles') {
+          distance = distance * 1609.34; // miles to meters
+        }
+        // If already in meters or km, keep as is (assuming meters)
       }
     }
     
-    const steps = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.steps, 'max');
-    const distance = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.distance, 'max');
-    const flightsClimbed = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.flightsClimbed, 'max');
+    let flightsClimbed = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.flightsClimbed, 'sum');
+    if (flightsClimbed !== null) {
+      flightsClimbed = Math.round(flightsClimbed); // Round to whole flights
+    }
+    
+    // Stand Hours - special calculation: count distinct hours with ≥1 minute of stand time
+    // Stand ring = number of hours (0-23) where you stood at least 1 minute
+    let standHours: number | null = null;
+    const standMetric = findMetric(metrics, METRIC_MAPPINGS.standHours);
+    if (standMetric && standMetric.data) {
+      // Group stand minutes by hour for this date
+      const standMinutesByHour = new Map<number, number>();
+      standMetric.data.forEach(d => {
+        if (normalizeDate(d.date) === date) {
+          const hour = getLocalHour(d.date);
+          const current = standMinutesByHour.get(hour) || 0;
+          standMinutesByHour.set(hour, current + d.qty);
+        }
+      });
+      
+      // Count hours with ≥1 minute of stand time
+      let hoursWithStand = 0;
+      standMinutesByHour.forEach((minutes, hour) => {
+        if (minutes >= 1.0) {
+          hoursWithStand++;
+        }
+      });
+      
+      standHours = hoursWithStand > 0 ? hoursWithStand : null;
+    }
     
     // Heart metrics (average for rates, min/max for extremes)
     const restingHeartRate = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.restingHeartRate, 'avg');
