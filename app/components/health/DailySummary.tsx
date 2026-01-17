@@ -57,17 +57,21 @@ export default function DailySummary({
         </button>
       </div>
 
-      {/* Activity Rings */}
-      <div className="flex justify-center mb-8">
-        <ActivityRings
-          moveValue={dailyData.activeCalories || 0}
-          moveGoal={600}
-          exerciseValue={dailyData.exerciseMinutes || 0}
-          exerciseGoal={30}
-          standValue={dailyData.standHours || 0}
-          standGoal={12}
-        />
-      </div>
+      {/* Activity Rings - only show if there's actual activity data */}
+      {((dailyData.activeCalories !== null && dailyData.activeCalories > 0) ||
+        (dailyData.exerciseMinutes !== null && dailyData.exerciseMinutes > 0) ||
+        (dailyData.standHours !== null && dailyData.standHours > 0)) && (
+        <div className="flex justify-center mb-8">
+          <ActivityRings
+            moveValue={dailyData.activeCalories || 0}
+            moveGoal={600}
+            exerciseValue={dailyData.exerciseMinutes || 0}
+            exerciseGoal={30}
+            standValue={dailyData.standHours || 0}
+            standGoal={12}
+          />
+        </div>
+      )}
 
       {/* All Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -75,30 +79,24 @@ export default function DailySummary({
         <div className="border-t border-[#2a2a2a] pt-6">
           <h3 className="text-[#c8c8c8] text-lg mb-4 font-normal">Activity</h3>
           <div className="space-y-3">
-            {dailyData.steps !== null && (
-              <div>
-                <div className="text-[#969696] text-sm">Steps</div>
-                <div className="text-[#c8c8c8] text-2xl font-normal">
-                  {dailyData.steps.toLocaleString()}
-                </div>
+            <div>
+              <div className="text-[#969696] text-sm">Steps</div>
+              <div className="text-[#c8c8c8] text-2xl font-normal">
+                {dailyData.steps !== null ? dailyData.steps.toLocaleString() : '0'}
               </div>
-            )}
-            {dailyData.distance !== null && (
-              <div>
-                <div className="text-[#969696] text-sm">Distance</div>
-                <div className="text-[#c8c8c8] text-xl font-normal">
-                  {formatDistance(dailyData.distance)}
-                </div>
+            </div>
+            <div>
+              <div className="text-[#969696] text-sm">Distance</div>
+              <div className="text-[#c8c8c8] text-xl font-normal">
+                {dailyData.distance !== null ? formatDistance(dailyData.distance) : '0 m'}
               </div>
-            )}
-            {dailyData.flightsClimbed !== null && (
-              <div>
-                <div className="text-[#969696] text-sm">Flights Climbed</div>
-                <div className="text-[#c8c8c8] text-xl font-normal">
-                  {Math.round(dailyData.flightsClimbed)}
-                </div>
+            </div>
+            <div>
+              <div className="text-[#969696] text-sm">Flights Climbed</div>
+              <div className="text-[#c8c8c8] text-xl font-normal">
+                {dailyData.flightsClimbed !== null ? Math.round(dailyData.flightsClimbed) : '0'}
               </div>
-            )}
+            </div>
             {dailyData.activeCalories !== null && (
               <div>
                 <div className="text-[#969696] text-sm">Active Calories</div>

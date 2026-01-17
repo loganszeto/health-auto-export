@@ -288,34 +288,51 @@ export function processDailyMetrics(allData: StoredHealthData[]): DailyHealthMet
     // VO2 Max (sparse, use latest available)
     const vo2Max = aggregateDailyValue(metrics, date, METRIC_MAPPINGS.vo2Max, 'avg');
     
-    // Derive speed from distance/time if available
-    // Note: This is approximate - we'd need workout data for accurate speed
-    let speed: number | null = null;
-    if (distance !== null && exerciseMinutes !== null && exerciseMinutes > 0) {
-      // Convert distance to km, time to hours
-      const distanceKm = distance / 1000; // assuming meters
-      const timeHours = exerciseMinutes / 60;
-      speed = distanceKm / timeHours; // km/h
-    }
-    
-    return {
-      date,
-      activeCalories,
-      exerciseMinutes,
-      standHours,
-      steps,
-      distance,
-      flightsClimbed,
-      speed,
-      restingHeartRate,
-      averageHeartRate,
-      minHeartRate,
-      maxHeartRate,
-      heartRateVariability,
-      timeInBed,
-      timeAsleep,
-      vo2Max,
-    };
+        // Derive speed from distance/time if available
+        // Note: This is approximate - we'd need workout data for accurate speed
+        let speed: number | null = null;
+        if (distance !== null && exerciseMinutes !== null && exerciseMinutes > 0) {
+          // Convert distance to km, time to hours
+          const distanceKm = distance / 1000; // assuming meters
+          const timeHours = exerciseMinutes / 60;
+          speed = distanceKm / timeHours; // km/h
+        }
+        
+        // Check if watch was worn: if all three activity rings are 0/null, it's a no-watch day
+        // On no-watch days, set all activity metrics to 0/null (not partial data)
+        const hasWatchData = (activeCalories !== null && activeCalories > 0) ||
+                            (exerciseMinutes !== null && exerciseMinutes > 0) ||
+                            (standHours !== null && standHours > 0);
+        
+        // If no watch data, zero out all activity metrics
+        if (!hasWatchData) {
+          activeCalories = null;
+          exerciseMinutes = null;
+          standHours = null;
+          steps = null;
+          distance = null;
+          flightsClimbed = null;
+          speed = null;
+        }
+        
+        return {
+          date,
+          activeCalories,
+          exerciseMinutes,
+          standHours,
+          steps,
+          distance,
+          flightsClimbed,
+          speed,
+          restingHeartRate,
+          averageHeartRate,
+          minHeartRate,
+          maxHeartRate,
+          heartRateVariability,
+          timeInBed,
+          timeAsleep,
+          vo2Max,
+        };
   });
   } catch (error) {
     console.error('Error in processDailyMetrics:', error);
