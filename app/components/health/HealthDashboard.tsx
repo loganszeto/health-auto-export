@@ -27,25 +27,28 @@ export default function HealthDashboard() {
 
   useEffect(() => {
     if (rawData.length > 0) {
-      try {
-        console.log('Processing raw data:', rawData.length, 'entries');
-        const processed = processDailyMetrics(rawData);
-        console.log('Processed metrics:', processed.length, 'days');
-        if (processed.length > 0) {
-          console.log('Sample processed day:', processed[processed.length - 1]);
-          setDailyMetrics(processed);
-          // Set to most recent day (last index since dates are ascending)
-          setSelectedDateIndex(processed.length - 1);
-        } else {
-          console.warn('No processed metrics returned');
+      // Process asynchronously to prevent blocking
+      const processData = async () => {
+        try {
+          // Yield to browser to prevent blocking
+          await new Promise(resolve => setTimeout(resolve, 0));
+          
+          const processed = processDailyMetrics(rawData);
+          if (processed.length > 0) {
+            setDailyMetrics(processed);
+            // Set to most recent day (last index since dates are ascending)
+            setSelectedDateIndex(processed.length - 1);
+          } else {
+            setDailyMetrics([]);
+          }
+        } catch (error) {
+          console.error('Error processing data:', error);
+          setError(`Error processing health data: ${error instanceof Error ? error.message : String(error)}`);
           setDailyMetrics([]);
         }
-      } catch (error) {
-        console.error('Error processing data:', error);
-        console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
-        setError(`Error processing health data: ${error instanceof Error ? error.message : String(error)}`);
-        setDailyMetrics([]);
-      }
+      };
+      
+      processData();
     } else {
       setDailyMetrics([]);
     }
@@ -63,14 +66,12 @@ export default function HealthDashboard() {
       }
       
       const result = await response.json();
-      console.log('API response:', result);
       
       if (result.success && result.data && result.data.length > 0) {
-        console.log('Raw data received:', result.data.length, 'entries');
-        console.log('Sample entry:', result.data[0]);
-        setRawData(result.data);
+        // Limit to most recent 5 exports to prevent processing too much data
+        const limitedData = result.data.slice(0, 5);
+        setRawData(limitedData);
       } else {
-        console.log('No data in response:', result);
         setError('No health data available. Make sure Health Auto Export is configured and syncing.');
         setRawData([]);
       }

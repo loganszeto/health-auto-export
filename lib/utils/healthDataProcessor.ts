@@ -158,25 +158,36 @@ export function processDailyMetrics(allData: StoredHealthData[]): DailyHealthMet
     
     // Collect all metrics from all entries
     // For bucketed data, we need to keep ALL data points (they're incremental contributions)
+    // But optimize: only keep data points for dates we're processing
+    const targetDates = new Set(dates);
+    
     allData.forEach(entry => {
       if (!entry.metrics) return;
       entry.metrics.forEach(metric => {
         if (!metric.data || metric.data.length === 0) return;
         
+        // Filter data points to only include dates we're processing (optimization)
+        const relevantData = metric.data.filter(d => {
+          if (!d || !d.date) return false;
+          return targetDates.has(normalizeDate(d.date));
+        });
+        
+        if (relevantData.length === 0) return;
+        
         const existingMetric = allMetricsMap.get(metric.name);
         if (existingMetric) {
           // Merge data points - keep ALL data points (they're bucketed contributions to be summed)
-          // Only filter out exact duplicates (same timestamp AND same value)
-          metric.data.forEach(dataPoint => {
-            if (!dataPoint || !dataPoint.date) return;
-            // Check if this exact data point already exists
-            const isDuplicate = existingMetric.data.some(
-              d => d.date === dataPoint.date && Math.abs(d.qty - dataPoint.qty) < 0.0001
-            );
-            if (!isDuplicate) {
+          // Use a Set for faster duplicate checking
+          const existingKeys = new Set(existingMetric.data.map(d => `${d.date}|${d.qty}`));
+          
+          relevantData.forEach(dataPoint => {
+            const key = `${dataPoint.date}|${dataPoint.qty}`;
+            if (!existingKeys.has(key)) {
               existingMetric.data.push(dataPoint);
+              existingKeys.add(key);
             }
           });
+          
           // Sort by date/time
           existingMetric.data.sort((a, b) => 
             new Date(a.date).getTime() - new Date(b.date).getTime()
@@ -186,7 +197,7 @@ export function processDailyMetrics(allData: StoredHealthData[]): DailyHealthMet
           allMetricsMap.set(metric.name, {
             name: metric.name,
             units: metric.units,
-            data: metric.data.filter(d => d && d.date), // Filter out invalid entries
+            data: relevantData,
           });
         }
       });
@@ -235,20 +246,26 @@ export function processDailyMetrics(allData: StoredHealthData[]): DailyHealthMet
     // Stand ring = number of hours (0-23) where you stood at least 1 minute
     let standHours: number | null = null;
     const standMetric = findMetric(metrics, METRIC_MAPPINGS.standHours);
-    if (standMetric && standMetric.data) {
-      // Group stand minutes by hour for this date
+    if (standMetric && standMetric.data && standMetric.data.length > 0) {
+      // Group stand minutes by hour for this date - filter first to avoid processing all data
       const standMinutesByHour = new Map<number, number>();
-      standMetric.data.forEach(d => {
-        if (normalizeDate(d.date) === date) {
+      const normalizedTargetDate = normalizeDate(date);
+      
+      // Only process data points for this specific date
+      for (let i = 0; i < standMetric.data.length; i++) {
+        const d = standMetric.data[i];
+        if (!d || !d.date) continue;
+        
+        if (normalizeDate(d.date) === normalizedTargetDate) {
           const hour = getLocalHour(d.date);
           const current = standMinutesByHour.get(hour) || 0;
-          standMinutesByHour.set(hour, current + d.qty);
+          standMinutesByHour.set(hour, current + (d.qty || 0));
         }
-      });
+      }
       
       // Count hours with ≥1 minute of stand time
       let hoursWithStand = 0;
-      standMinutesByHour.forEach((minutes, hour) => {
+      standMinutesByHour.forEach((minutes) => {
         if (minutes >= 1.0) {
           hoursWithStand++;
         }
