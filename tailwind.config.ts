@@ -9,23 +9,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: '#1f1f28',
-        secondary: '#2a2a37',
-        accent: '#e6c384',
-        'gray-custom': '#7c7c7c',
-        'text-primary': '#c8c093',
+        primary: '#141414',
+        secondary: '#1a1a1a',
+        'text-primary': '#c8c8c8',
+        'text-muted': '#969696',
       },
       backgroundColor: {
-        'page': '#1f1f28',
+        'page': '#141414',
       },
       textColor: {
-        'default': '#c8c093',
-        'muted': '#7c7c7c',
-        'accent': '#e6c384',
+        'default': '#c8c8c8',
+        'muted': '#969696',
       },
       fontFamily: {
-        sans: ['Cascadia Code', 'monospace'],
-        mono: ['Cascadia Code', 'monospace'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'sans-serif'],
+        mono: ['Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'monospace'],
       },
     },
   },

@@ -4,12 +4,10 @@ import { useEffect, useState } from 'react';
 import { StoredHealthData } from '@/lib/models/HealthData';
 import {
   processDailyMetrics,
-  computeHistoricalStats,
   generateTimeSeries,
 } from '@/lib/utils/healthDataProcessor';
 import { DailyHealthMetrics } from '@/lib/models/ProcessedHealthData';
 import DailySummary from './DailySummary';
-import HistoricalAverages from './HistoricalAverages';
 import TimeSeriesChart from './TimeSeriesChart';
 
 export default function HealthDashboard() {
@@ -31,12 +29,9 @@ export default function HealthDashboard() {
       // Process raw data into daily metrics
       const processed = processDailyMetrics(rawData);
       setDailyMetrics(processed);
-      // Set selected date to today (current day)
+      // Set selected date to most recent day (index 0, since dates are sorted descending)
       if (processed.length > 0) {
-        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-        const todayIndex = processed.findIndex(d => d.date === today);
-        // If today exists in data, use it; otherwise use the most recent date (last entry)
-        setSelectedDateIndex(todayIndex >= 0 ? todayIndex : processed.length - 1);
+        setSelectedDateIndex(0);
       }
     }
   }, [rawData]);
@@ -79,30 +74,29 @@ export default function HealthDashboard() {
 
   if (loading) {
     return (
-      <div className="bg-[#1f1f28] border border-[#363646] rounded-lg p-8">
-        <p className="text-gray-400">Loading health data...</p>
+      <div className="border-t border-[#2a2a2a] pt-8">
+        <p className="text-[#969696]">Loading health data...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-[#1f1f28] border border-[#363646] rounded-lg p-8">
-        <p className="text-red-400">{error}</p>
+      <div className="border-t border-[#2a2a2a] pt-8">
+        <p className="text-[#969696]">{error}</p>
       </div>
     );
   }
 
   if (dailyMetrics.length === 0) {
     return (
-      <div className="bg-[#1f1f28] border border-[#363646] rounded-lg p-8">
-        <p className="text-[#7c7c7c]">No processed health data available.</p>
+      <div className="border-t border-[#2a2a2a] pt-8">
+        <p className="text-[#969696]">No processed health data available.</p>
       </div>
     );
   }
 
   const selectedDay = dailyMetrics[selectedDateIndex];
-  const historicalStats = computeHistoricalStats(dailyMetrics);
   const timeSeriesData = generateTimeSeries(dailyMetrics);
 
   return (
@@ -115,9 +109,6 @@ export default function HealthDashboard() {
         canGoPrevious={selectedDateIndex > 0}
         canGoNext={selectedDateIndex < dailyMetrics.length - 1}
       />
-
-      {/* Section B: Historical Averages */}
-      <HistoricalAverages stats={historicalStats} />
 
       {/* Time Series Chart */}
       <TimeSeriesChart data={timeSeriesData} />

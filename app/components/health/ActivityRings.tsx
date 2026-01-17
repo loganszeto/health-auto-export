@@ -27,10 +27,10 @@ export default function ActivityRings({
   const exerciseProgress = Math.min(exerciseValue / exerciseGoal, 1);
   const standProgress = Math.min(standValue / standGoal, 1);
   
-  // Ring colors (Apple Watch style)
-  const moveColor = '#fa114f'; // Red
-  const exerciseColor = '#00d9ff'; // Green
-  const standColor = '#ffd60a'; // Yellow
+  // Ring colors (white and grey)
+  const moveColor = '#c8c8c8'; // Light grey
+  const exerciseColor = '#969696'; // Medium grey
+  const standColor = '#c8c8c8'; // Light grey
   
   // SVG dimensions - increased to ensure rings are fully visible
   const size = 240;
@@ -68,7 +68,7 @@ export default function ActivityRings({
           cy={center}
           r={moveRadius}
           fill="none"
-          stroke="#363646"
+          stroke="#2a2a2a"
           strokeWidth={strokeWidth}
         />
         <circle
@@ -90,7 +90,7 @@ export default function ActivityRings({
           cy={center}
           r={exerciseRadius}
           fill="none"
-          stroke="#363646"
+          stroke="#2a2a2a"
           strokeWidth={strokeWidth}
         />
         <circle
@@ -112,7 +112,7 @@ export default function ActivityRings({
           cy={center}
           r={standRadius}
           fill="none"
-          stroke="#363646"
+          stroke="#2a2a2a"
           strokeWidth={strokeWidth}
         />
         <circle
@@ -132,19 +132,19 @@ export default function ActivityRings({
       {/* Labels */}
       <div className="mt-4 grid grid-cols-3 gap-4 text-center">
         <div>
-          <div className="text-[#fa114f] text-sm font-semibold">MOVE</div>
-          <div className="text-white text-lg font-bold">{Math.round(moveValue)}</div>
-          <div className="text-[#7c7c7c] text-xs">kcal</div>
+          <div className="text-[#c8c8c8] text-sm font-normal">MOVE</div>
+          <div className="text-[#c8c8c8] text-lg font-normal">{Math.round(moveValue)}</div>
+          <div className="text-[#969696] text-xs">kcal</div>
         </div>
         <div>
-          <div className="text-[#00d9ff] text-sm font-semibold">EXERCISE</div>
-          <div className="text-white text-lg font-bold">{Math.round(exerciseValue)}</div>
-          <div className="text-[#7c7c7c] text-xs">min</div>
+          <div className="text-[#c8c8c8] text-sm font-normal">EXERCISE</div>
+          <div className="text-[#c8c8c8] text-lg font-normal">{Math.round(exerciseValue)}</div>
+          <div className="text-[#969696] text-xs">min</div>
         </div>
         <div>
-          <div className="text-[#ffd60a] text-sm font-semibold">STAND</div>
-          <div className="text-white text-lg font-bold">{Math.round(standValue)}</div>
-          <div className="text-[#7c7c7c] text-xs">hrs</div>
+          <div className="text-[#c8c8c8] text-sm font-normal">STAND</div>
+          <div className="text-[#c8c8c8] text-lg font-normal">{Math.round(standValue)}</div>
+          <div className="text-[#969696] text-xs">hrs</div>
         </div>
       </div>
     </div>

@@ -53,23 +53,23 @@ export default function DailySummary({
     dailyData.steps === null;
   
   return (
-    <div className="bg-[#1f1f28] border border-[#363646] rounded-lg p-8">
+    <div className="border-t border-[#2a2a2a] pt-8">
       {/* Date Header with Navigation */}
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={onPreviousDay}
           disabled={!canGoPrevious}
-          className="text-[#e6c384] hover:text-white disabled:text-[#7c7c7c] disabled:cursor-not-allowed transition-colors"
+          className="text-[#969696] hover:text-[#c8c8c8] disabled:opacity-50 disabled:cursor-not-allowed transition-opacity text-sm"
         >
           ← Previous
         </button>
-        <h2 className="text-[#e6c384] text-2xl font-semibold">
+        <h2 className="text-[#c8c8c8] text-xl font-normal">
           {formatDate(dailyData.date)}
         </h2>
         <button
           onClick={onNextDay}
           disabled={!canGoNext}
-          className="text-[#e6c384] hover:text-white disabled:text-[#7c7c7c] disabled:cursor-not-allowed transition-colors"
+          className="text-[#969696] hover:text-[#c8c8c8] disabled:opacity-50 disabled:cursor-not-allowed transition-opacity text-sm"
         >
           Next →
         </button>
@@ -77,7 +77,7 @@ export default function DailySummary({
       
       {hasNoData ? (
         <div className="text-center py-12">
-          <p className="text-[#7c7c7c] text-lg">No data available for this day</p>
+          <p className="text-[#969696] text-base">No data available for this day</p>
         </div>
       ) : (
         <>
@@ -93,43 +93,43 @@ export default function DailySummary({
             />
           </div>
           
-          {/* Three-Column Metrics Layout */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Two-Column Metrics Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Activity Column */}
-            <div className="bg-[#16161d] border border-[#363646] rounded-lg p-6">
-              <h3 className="text-[#e6c384] text-xl mb-4 font-semibold">Activity</h3>
+            <div className="border-t border-[#2a2a2a] pt-6">
+              <h3 className="text-[#c8c8c8] text-lg mb-4 font-normal">Activity</h3>
               <div className="space-y-3">
                 <div>
-                  <div className="text-[#7c7c7c] text-sm">Steps</div>
-                  <div className="text-white text-2xl font-bold">
+                  <div className="text-[#969696] text-sm">Steps</div>
+                  <div className="text-[#c8c8c8] text-2xl font-normal">
                     {dailyData.steps?.toLocaleString() || 'N/A'}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[#7c7c7c] text-sm">Distance</div>
-                  <div className="text-white text-xl font-semibold">
+                  <div className="text-[#969696] text-sm">Distance</div>
+                  <div className="text-[#c8c8c8] text-xl font-normal">
                     {formatDistance(dailyData.distance)}
                   </div>
                 </div>
                 {dailyData.flightsClimbed !== null && (
                   <div>
-                    <div className="text-[#7c7c7c] text-sm">Flights Climbed</div>
-                    <div className="text-white text-xl font-semibold">
+                    <div className="text-[#969696] text-sm">Flights Climbed</div>
+                    <div className="text-[#c8c8c8] text-xl font-normal">
                       {Math.round(dailyData.flightsClimbed)}
                     </div>
                   </div>
                 )}
                 {dailyData.speed !== null && (
                   <div>
-                    <div className="text-[#7c7c7c] text-sm">Avg Speed</div>
-                    <div className="text-white text-xl font-semibold">
+                    <div className="text-[#969696] text-sm">Avg Speed</div>
+                    <div className="text-[#c8c8c8] text-xl font-normal">
                       {dailyData.speed.toFixed(1)} km/h
                     </div>
                   </div>
                 )}
-                <div className="pt-2 border-t border-[#363646]">
-                  <div className="text-[#7c7c7c] text-xs">Move Ring</div>
-                  <div className="text-white text-lg font-semibold">
+                <div className="pt-2 border-t border-[#2a2a2a]">
+                  <div className="text-[#969696] text-xs">Move Ring</div>
+                  <div className="text-[#c8c8c8] text-lg font-normal">
                     {Math.round(dailyData.activeCalories || 0)} / 600 kcal
                   </div>
                 </div>
@@ -137,37 +137,37 @@ export default function DailySummary({
             </div>
             
             {/* Heart Column */}
-            <div className="bg-[#16161d] border border-[#363646] rounded-lg p-6">
-              <h3 className="text-[#e6c384] text-xl mb-4 font-semibold">Heart</h3>
+            <div className="border-t border-[#2a2a2a] pt-6">
+              <h3 className="text-[#c8c8c8] text-lg mb-4 font-normal">Heart</h3>
               <div className="space-y-3">
                 {dailyData.averageHeartRate !== null && (
                   <div>
-                    <div className="text-[#7c7c7c] text-sm">Average HR</div>
-                    <div className="text-white text-2xl font-bold">
+                    <div className="text-[#969696] text-sm">Average HR</div>
+                    <div className="text-[#c8c8c8] text-2xl font-normal">
                       {Math.round(dailyData.averageHeartRate)} bpm
                     </div>
                   </div>
                 )}
                 {dailyData.minHeartRate !== null && (
                   <div>
-                    <div className="text-[#7c7c7c] text-sm">Min HR</div>
-                    <div className="text-white text-xl font-semibold">
+                    <div className="text-[#969696] text-sm">Min HR</div>
+                    <div className="text-[#c8c8c8] text-xl font-normal">
                       {Math.round(dailyData.minHeartRate)} bpm
                     </div>
                   </div>
                 )}
                 {dailyData.maxHeartRate !== null && (
                   <div>
-                    <div className="text-[#7c7c7c] text-sm">Max HR</div>
-                    <div className="text-white text-xl font-semibold">
+                    <div className="text-[#969696] text-sm">Max HR</div>
+                    <div className="text-[#c8c8c8] text-xl font-normal">
                       {Math.round(dailyData.maxHeartRate)} bpm
                     </div>
                   </div>
                 )}
                 {dailyData.restingHeartRate !== null && (
                   <div>
-                    <div className="text-[#7c7c7c] text-sm">Resting HR</div>
-                    <div className="text-white text-xl font-semibold">
+                    <div className="text-[#969696] text-sm">Resting HR</div>
+                    <div className="text-[#c8c8c8] text-xl font-normal">
                       {Math.round(dailyData.restingHeartRate)} bpm
                     </div>
                   </div>
@@ -176,33 +176,7 @@ export default function DailySummary({
                  dailyData.minHeartRate === null && 
                  dailyData.maxHeartRate === null && 
                  dailyData.restingHeartRate === null && (
-                  <div className="text-[#7c7c7c] text-sm">No heart data available</div>
-                )}
-              </div>
-            </div>
-            
-            {/* Sleep Column */}
-            <div className="bg-[#16161d] border border-[#363646] rounded-lg p-6">
-              <h3 className="text-[#e6c384] text-xl mb-4 font-semibold">Sleep</h3>
-              <div className="space-y-3">
-                {dailyData.timeInBed !== null && (
-                  <div>
-                    <div className="text-[#7c7c7c] text-sm">In Bed</div>
-                    <div className="text-white text-2xl font-bold">
-                      {formatTime(dailyData.timeInBed)}
-                    </div>
-                  </div>
-                )}
-                {dailyData.timeAsleep !== null && (
-                  <div>
-                    <div className="text-[#7c7c7c] text-sm">Asleep</div>
-                    <div className="text-white text-xl font-semibold">
-                      {formatTime(dailyData.timeAsleep)}
-                    </div>
-                  </div>
-                )}
-                {dailyData.timeInBed === null && dailyData.timeAsleep === null && (
-                  <div className="text-[#7c7c7c] text-sm">No sleep data available</div>
+                  <div className="text-[#969696] text-sm">No heart data available</div>
                 )}
               </div>
             </div>

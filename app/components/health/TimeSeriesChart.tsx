@@ -33,21 +33,16 @@ interface TimeSeriesChartProps {
 /**
  * Time Series Chart Component
  * 
- * Displays VO2 Max, Sleep Duration, and Active Calories over time
- * Uses dual Y-axes: left for VO2 Max and Calories, right for Sleep Duration
- * Includes toggles for each series and trend lines
+ * Displays Active Calories and Steps over time with trend lines
  */
 export default function TimeSeriesChart({ data }: TimeSeriesChartProps) {
-  const [showVO2Max, setShowVO2Max] = useState(true);
-  const [showSleep, setShowSleep] = useState(true);
-  const [showCalories, setShowCalories] = useState(true);
   const [showTrends, setShowTrends] = useState(true);
   
   if (data.length === 0) {
     return (
-      <div className="bg-[#1f1f28] border border-[#363646] rounded-lg p-8">
-        <h2 className="text-[#e6c384] text-2xl mb-4">Time Series Analysis</h2>
-        <p className="text-[#7c7c7c]">No data available for chart.</p>
+      <div className="border-t border-[#2a2a2a] pt-8">
+        <h2 className="text-[#c8c8c8] text-xl mb-4 font-normal">Time Series</h2>
+        <p className="text-[#969696]">No data available for chart.</p>
       </div>
     );
   }
@@ -58,92 +53,60 @@ export default function TimeSeriesChart({ data }: TimeSeriesChartProps) {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   });
   
-  // Normalize data for visualization
-  // VO2 Max: typically 20-60 ml/kg/min
-  // Sleep: minutes (typically 300-600 = 5-10 hours)
-  // Calories: typically 200-1000 kcal
-  
-  // For dual-axis: VO2 Max and Calories on left, Sleep on right
-  const vo2MaxData = data.map(d => d.vo2Max);
-  const sleepData = data.map(d => d.sleepDuration ? d.sleepDuration / 60 : null); // Convert to hours for better scale
   const caloriesData = data.map(d => d.activeCalories);
+  const stepsData = data.map(d => d.steps);
   
   // Trend lines
-  const vo2MaxTrend = data.map(d => d.vo2MaxTrend);
-  const sleepTrend = data.map(d => d.sleepTrend ? d.sleepTrend / 60 : null);
   const caloriesTrend = data.map(d => d.caloriesTrend);
+  const stepsTrend = data.map(d => d.stepsTrend);
   
   const chartData = {
     labels,
     datasets: [
-      // VO2 Max
-      ...(showVO2Max ? [{
-        label: 'VO2 Max',
-        data: vo2MaxData,
-        borderColor: '#00d9ff',
-        backgroundColor: 'rgba(0, 217, 255, 0.1)',
-        yAxisID: 'y',
-        fill: false,
-        tension: 0.4,
-        pointRadius: 2,
-        pointHoverRadius: 4,
-      }] : []),
-      // VO2 Max Trend
-      ...(showVO2Max && showTrends ? [{
-        label: 'VO2 Max Trend',
-        data: vo2MaxTrend,
-        borderColor: '#00d9ff',
-        borderDash: [5, 5],
-        backgroundColor: 'transparent',
-        yAxisID: 'y',
-        fill: false,
-        tension: 0.4,
-        pointRadius: 0,
-      }] : []),
-      // Sleep Duration
-      ...(showSleep ? [{
-        label: 'Sleep Duration (hours)',
-        data: sleepData,
-        borderColor: '#ffd60a',
-        backgroundColor: 'rgba(255, 214, 10, 0.1)',
-        yAxisID: 'y1',
-        fill: false,
-        tension: 0.4,
-        pointRadius: 2,
-        pointHoverRadius: 4,
-      }] : []),
-      // Sleep Trend
-      ...(showSleep && showTrends ? [{
-        label: 'Sleep Trend',
-        data: sleepTrend,
-        borderColor: '#ffd60a',
-        borderDash: [5, 5],
-        backgroundColor: 'transparent',
-        yAxisID: 'y1',
-        fill: false,
-        tension: 0.4,
-        pointRadius: 0,
-      }] : []),
       // Active Calories
-      ...(showCalories ? [{
+      {
         label: 'Active Calories',
         data: caloriesData,
-        borderColor: '#fa114f',
-        backgroundColor: 'rgba(250, 17, 79, 0.1)',
+        borderColor: '#c8c8c8',
+        backgroundColor: 'rgba(200, 200, 200, 0.1)',
         yAxisID: 'y',
         fill: false,
         tension: 0.4,
         pointRadius: 2,
         pointHoverRadius: 4,
-      }] : []),
+      },
       // Calories Trend
-      ...(showCalories && showTrends ? [{
+      ...(showTrends ? [{
         label: 'Calories Trend',
         data: caloriesTrend,
-        borderColor: '#fa114f',
+        borderColor: '#c8c8c8',
         borderDash: [5, 5],
         backgroundColor: 'transparent',
         yAxisID: 'y',
+        fill: false,
+        tension: 0.4,
+        pointRadius: 0,
+      }] : []),
+      // Steps
+      {
+        label: 'Steps',
+        data: stepsData,
+        borderColor: '#969696',
+        backgroundColor: 'rgba(150, 150, 150, 0.1)',
+        yAxisID: 'y1',
+        fill: false,
+        tension: 0.4,
+        pointRadius: 2,
+        pointHoverRadius: 4,
+      },
+      // Steps Trend
+      ...(showTrends ? [{
+        label: 'Steps Trend',
+        data: stepsTrend,
+        borderColor: '#969696',
+        borderDash: [5, 5],
+        backgroundColor: 'transparent',
+        yAxisID: 'y1',
         fill: false,
         tension: 0.4,
         pointRadius: 0,
@@ -163,7 +126,7 @@ export default function TimeSeriesChart({ data }: TimeSeriesChartProps) {
         display: true,
         position: 'top' as const,
         labels: {
-          color: '#c8c093',
+          color: '#c8c8c8',
           usePointStyle: true,
         },
       },
@@ -171,20 +134,20 @@ export default function TimeSeriesChart({ data }: TimeSeriesChartProps) {
         display: false,
       },
       tooltip: {
-        backgroundColor: '#1f1f28',
-        titleColor: '#e6c384',
-        bodyColor: '#c8c093',
-        borderColor: '#363646',
+        backgroundColor: '#141414',
+        titleColor: '#c8c8c8',
+        bodyColor: '#c8c8c8',
+        borderColor: '#2a2a2a',
         borderWidth: 1,
       },
     },
     scales: {
       x: {
         grid: {
-          color: '#363646',
+          color: '#2a2a2a',
         },
         ticks: {
-          color: '#7c7c7c',
+          color: '#969696',
           maxRotation: 45,
           minRotation: 45,
         },
@@ -194,15 +157,15 @@ export default function TimeSeriesChart({ data }: TimeSeriesChartProps) {
         display: true,
         position: 'left' as const,
         grid: {
-          color: '#363646',
+          color: '#2a2a2a',
         },
         ticks: {
-          color: '#7c7c7c',
+          color: '#969696',
         },
         title: {
           display: true,
-          text: 'VO2 Max (ml/kg/min) / Calories (kcal)',
-          color: '#7c7c7c',
+          text: 'Calories (kcal)',
+          color: '#969696',
         },
       },
       y1: {
@@ -213,69 +176,40 @@ export default function TimeSeriesChart({ data }: TimeSeriesChartProps) {
           drawOnChartArea: false,
         },
         ticks: {
-          color: '#7c7c7c',
+          color: '#969696',
         },
         title: {
           display: true,
-          text: 'Sleep Duration (hours)',
-          color: '#7c7c7c',
+          text: 'Steps',
+          color: '#969696',
         },
       },
     },
   };
   
   return (
-    <div className="bg-[#1f1f28] border border-[#363646] rounded-lg p-8">
+    <div className="border-t border-[#2a2a2a] pt-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-        <h2 className="text-[#e6c384] text-2xl mb-4 md:mb-0">Time Series Analysis</h2>
+        <h2 className="text-[#c8c8c8] text-xl mb-4 md:mb-0 font-normal">Time Series</h2>
         
-        {/* Toggles */}
-        <div className="flex flex-wrap gap-4">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showVO2Max}
-              onChange={(e) => setShowVO2Max(e.target.checked)}
-              className="w-4 h-4 text-[#e6c384] bg-[#16161d] border-[#363646] rounded focus:ring-[#e6c384]"
-            />
-            <span className="text-[#7c7c7c] text-sm">VO2 Max</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showSleep}
-              onChange={(e) => setShowSleep(e.target.checked)}
-              className="w-4 h-4 text-[#e6c384] bg-[#16161d] border-[#363646] rounded focus:ring-[#e6c384]"
-            />
-            <span className="text-[#7c7c7c] text-sm">Sleep</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showCalories}
-              onChange={(e) => setShowCalories(e.target.checked)}
-              className="w-4 h-4 text-[#e6c384] bg-[#16161d] border-[#363646] rounded focus:ring-[#e6c384]"
-            />
-            <span className="text-[#7c7c7c] text-sm">Calories</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showTrends}
-              onChange={(e) => setShowTrends(e.target.checked)}
-              className="w-4 h-4 text-[#e6c384] bg-[#16161d] border-[#363646] rounded focus:ring-[#e6c384]"
-            />
-            <span className="text-[#7c7c7c] text-sm">Trend Lines</span>
-          </label>
-        </div>
+        {/* Toggle */}
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showTrends}
+            onChange={(e) => setShowTrends(e.target.checked)}
+            className="w-4 h-4 text-[#c8c8c8] bg-[#1a1a1a] border-[#2a2a2a] rounded focus:ring-[#c8c8c8]"
+          />
+          <span className="text-[#969696] text-sm">Trend Lines</span>
+        </label>
       </div>
       
       <div className="h-96">
         <Line data={chartData} options={options} />
       </div>
       
-      <p className="text-[#7c7c7c] text-xs mt-4">
-        Trend lines show 7-day rolling averages. VO2 Max data may be sparse.
+      <p className="text-[#969696] text-xs mt-4">
+        Trend lines show 7-day rolling averages.
       </p>
     </div>
   );

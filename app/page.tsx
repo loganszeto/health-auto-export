@@ -4,17 +4,14 @@ import HealthDashboard from './components/health/HealthDashboard';
 
 export default function Home() {
   return (
-    <main className="min-h-screen px-4 sm:px-6 lg:px-8 pt-10">
-      <div className="max-w-7xl mx-auto w-full">
-        <h1 className="text-[#e6c384] text-4xl sm:text-5xl mb-6">Health Dashboard</h1>
-        <p className="text-gray-400 text-base sm:text-lg mb-8">
+    <main className="min-h-screen px-6 sm:px-8 lg:px-12 pt-32 pb-20">
+      <div className="max-w-2xl w-full mx-auto">
+        <h1 className="text-[#c8c8c8] text-5xl sm:text-6xl mb-4 font-normal">Health Dashboard</h1>
+        <p className="text-[#969696] text-base mb-12">
           My Apple Watch health data.
         </p>
 
-        <div className="bg-[#1f1f28] border border-[#363646] rounded-lg p-8">
-          <h2 className="text-[#e6c384] text-2xl mb-6">Dashboard</h2>
-          <HealthDashboard />
-        </div>
+        <HealthDashboard />
       </div>
     </main>
   );

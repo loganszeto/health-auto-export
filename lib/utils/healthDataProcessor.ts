@@ -108,7 +108,7 @@ export function processDailyMetrics(allData: StoredHealthData[]): DailyHealthMet
     });
   });
   
-  const dates = Array.from(dateSet).sort();
+  const dates = Array.from(dateSet).sort().reverse(); // Most recent first
   
   // Process each date
   return dates.map(date => {
@@ -337,22 +337,6 @@ export function generateTimeSeries(
   trendWindow: number = 7
 ): TimeSeriesDataPoint[] {
   return dailyMetrics.map((day, index) => {
-    const vo2MaxTrend = day.vo2Max !== null
-      ? rollingAverage(
-          dailyMetrics.map(d => d.vo2Max),
-          trendWindow,
-          index
-        )
-      : null;
-    
-    const sleepTrend = day.timeAsleep !== null
-      ? rollingAverage(
-          dailyMetrics.map(d => d.timeAsleep),
-          trendWindow,
-          index
-        )
-      : null;
-    
     const caloriesTrend = day.activeCalories !== null
       ? rollingAverage(
           dailyMetrics.map(d => d.activeCalories),
@@ -361,14 +345,20 @@ export function generateTimeSeries(
         )
       : null;
     
+    const stepsTrend = day.steps !== null
+      ? rollingAverage(
+          dailyMetrics.map(d => d.steps),
+          trendWindow,
+          index
+        )
+      : null;
+    
     return {
       date: day.date,
-      vo2Max: day.vo2Max,
-      sleepDuration: day.timeAsleep,
       activeCalories: day.activeCalories,
-      vo2MaxTrend,
-      sleepTrend,
+      steps: day.steps,
       caloriesTrend,
+      stepsTrend,
     };
   });
 }

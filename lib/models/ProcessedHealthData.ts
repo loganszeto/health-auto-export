@@ -42,13 +42,11 @@ export interface HistoricalStats {
 
 export interface TimeSeriesDataPoint {
   date: string;
-  vo2Max: number | null;
-  sleepDuration: number | null; // minutes
   activeCalories: number | null;
+  steps: number | null;
   // Trend lines (computed)
-  vo2MaxTrend?: number | null;
-  sleepTrend?: number | null;
   caloriesTrend?: number | null;
+  stepsTrend?: number | null;
 }
 
 /**
