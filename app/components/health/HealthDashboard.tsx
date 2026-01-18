@@ -134,7 +134,7 @@ export default function HealthDashboard() {
   }
 
   const selectedDay = dailyMetrics[selectedDateIndex];
-  const timeSeriesData = generateTimeSeries(dailyMetrics);
+  const timeSeriesData = generateTimeSeries(dailyMetrics, 7, 30); // 7-day trend, 30 days shown
 
   return (
     <div className="space-y-8">

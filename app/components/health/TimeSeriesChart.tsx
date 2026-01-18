@@ -50,15 +50,16 @@ export default function TimeSeriesChart({ data }: TimeSeriesChartProps) {
   // Prepare chart data
   const labels = data.map(d => {
     const date = new Date(d.date + 'T00:00:00');
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' }); // Changed to 1/1 format
   });
   
-  const caloriesData = data.map(d => d.activeCalories);
-  const stepsData = data.map(d => d.steps);
+  // Map data - use 0 for null values to ensure lines connect
+  const caloriesData = data.map(d => d.activeCalories ?? 0);
+  const stepsData = data.map(d => d.steps ?? 0);
   
-  // Trend lines
-  const caloriesTrend = data.map(d => d.caloriesTrend);
-  const stepsTrend = data.map(d => d.stepsTrend);
+  // Trend lines - use 0 for null to ensure lines connect
+  const caloriesTrend = data.map(d => d.caloriesTrend ?? 0);
+  const stepsTrend = data.map(d => d.stepsTrend ?? 0);
   
   const chartData = {
     labels,

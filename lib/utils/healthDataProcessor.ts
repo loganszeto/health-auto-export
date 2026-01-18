@@ -472,27 +472,73 @@ function rollingAverage(values: (number | null)[], window: number, index: number
 
 /**
  * Generate time series data with trend lines
+ * Fills in missing days (last 30 days) with 0 values
  */
 export function generateTimeSeries(
   dailyMetrics: DailyHealthMetrics[],
-  trendWindow: number = 7
+  trendWindow: number = 7,
+  daysToShow: number = 30
 ): TimeSeriesDataPoint[] {
-  return dailyMetrics.map((day, index) => {
-    const caloriesTrend = day.activeCalories !== null
-      ? rollingAverage(
-          dailyMetrics.map(d => d.activeCalories),
-          trendWindow,
-          index
-        )
-      : null;
+  if (dailyMetrics.length === 0) {
+    return [];
+  }
+
+  // Get the most recent date from the data
+  const mostRecentDate = new Date(dailyMetrics[dailyMetrics.length - 1].date + 'T00:00:00');
+  
+  // Create a map of existing data by date for quick lookup
+  const dataMap = new Map<string, DailyHealthMetrics>();
+  dailyMetrics.forEach(day => {
+    dataMap.set(day.date, day);
+  });
+  
+  // Generate array of last 30 days (including today)
+  const timeSeriesData: TimeSeriesDataPoint[] = [];
+  for (let i = daysToShow - 1; i >= 0; i--) {
+    const date = new Date(mostRecentDate);
+    date.setDate(date.getDate() - i);
     
-    const stepsTrend = day.steps !== null
-      ? rollingAverage(
-          dailyMetrics.map(d => d.steps),
-          trendWindow,
-          index
-        )
-      : null;
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    
+    const existingData = dataMap.get(dateStr);
+    
+    // Use existing data if available, otherwise create empty entry with 0 values
+    const dayData: DailyHealthMetrics = existingData || {
+      date: dateStr,
+      activeCalories: null,
+      exerciseMinutes: null,
+      standHours: null,
+      steps: null,
+      distance: null,
+      flightsClimbed: null,
+      speed: null,
+      restingHeartRate: null,
+      averageHeartRate: null,
+      minHeartRate: null,
+      maxHeartRate: null,
+      heartRateVariability: null,
+      timeInBed: null,
+      timeAsleep: null,
+      vo2Max: null,
+    };
+    
+    timeSeriesData.push({
+      date: dateStr,
+      activeCalories: dayData.activeCalories ?? 0, // Use 0 instead of null for graph
+      steps: dayData.steps ?? 0, // Use 0 instead of null for graph
+      caloriesTrend: null, // Will be calculated below
+      stepsTrend: null, // Will be calculated below
+    });
+  }
+  
+  // Calculate trend lines (treat 0 values as valid data points)
+  return timeSeriesData.map((day, index) => {
+    // For trend calculation, use the actual values (0 is valid)
+    const caloriesValues = timeSeriesData.map(d => d.activeCalories ?? 0);
+    const stepsValues = timeSeriesData.map(d => d.steps ?? 0);
+    
+    const caloriesTrend = rollingAverageForTrend(caloriesValues, trendWindow, index);
+    const stepsTrend = rollingAverageForTrend(stepsValues, trendWindow, index);
     
     return {
       date: day.date,
@@ -504,3 +550,16 @@ export function generateTimeSeries(
   });
 }
 
+/**
+ * Compute rolling average for trend lines (treats 0 as valid data)
+ */
+function rollingAverageForTrend(values: number[], window: number, index: number): number | null {
+  const start = Math.max(0, index - Math.floor(window / 2));
+  const end = Math.min(values.length, index + Math.ceil(window / 2));
+  
+  const windowValues = values.slice(start, end);
+  if (windowValues.length === 0) return null;
+  
+  // Include 0 values in the average (they're valid data points)
+  return windowValues.reduce((a, b) => a + b, 0) / windowValues.length;
+}
