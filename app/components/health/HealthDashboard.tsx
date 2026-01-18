@@ -68,9 +68,8 @@ export default function HealthDashboard() {
       const result = await response.json();
       
       if (result.success && result.data && result.data.length > 0) {
-        // Limit to most recent 5 exports to prevent processing too much data
-        const limitedData = result.data.slice(0, 5);
-        setRawData(limitedData);
+        // Process all exports (API already limits to 30 days)
+        setRawData(result.data);
       } else {
         setError('No health data available. Make sure Health Auto Export is configured and syncing.');
         setRawData([]);

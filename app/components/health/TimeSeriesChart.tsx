@@ -209,7 +209,7 @@ export default function TimeSeriesChart({ data }: TimeSeriesChartProps) {
         <Line data={chartData} options={options} />
       </div>
       
-      <p className="text-[#969696] text-xs mt-4">
+      <p className="text-[#969696] text-xs mt-4 text-center">
         Trend lines show 7-day rolling averages.
       </p>
     </div>

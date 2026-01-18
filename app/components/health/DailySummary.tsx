@@ -27,11 +27,10 @@ export default function DailySummary({
   };
 
   const formatDistance = (meters: number | null) => {
-    if (meters === null) return 'N/A';
-    if (meters >= 1000) {
-      return `${(meters / 1000).toFixed(2)} km`;
-    }
-    return `${Math.round(meters)} m`;
+    if (meters === null) return '0 mi';
+    // Convert meters to miles (1 meter = 0.000621371 miles)
+    const miles = meters * 0.000621371;
+    return `${miles.toFixed(2)} mi`;
   };
 
   return (
@@ -97,30 +96,6 @@ export default function DailySummary({
                 {dailyData.flightsClimbed !== null ? Math.round(dailyData.flightsClimbed) : '0'}
               </div>
             </div>
-            {dailyData.activeCalories !== null && (
-              <div>
-                <div className="text-[#969696] text-sm">Active Calories</div>
-                <div className="text-[#c8c8c8] text-xl font-normal">
-                  {Math.round(dailyData.activeCalories)} kcal
-                </div>
-              </div>
-            )}
-            {dailyData.exerciseMinutes !== null && (
-              <div>
-                <div className="text-[#969696] text-sm">Exercise Minutes</div>
-                <div className="text-[#c8c8c8] text-xl font-normal">
-                  {Math.round(dailyData.exerciseMinutes)} min
-                </div>
-              </div>
-            )}
-            {dailyData.standHours !== null && (
-              <div>
-                <div className="text-[#969696] text-sm">Stand Hours</div>
-                <div className="text-[#c8c8c8] text-xl font-normal">
-                  {dailyData.standHours.toFixed(1)} hrs
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -128,42 +103,14 @@ export default function DailySummary({
         <div className="border-t border-[#2a2a2a] pt-6">
           <h3 className="text-[#c8c8c8] text-lg mb-4 font-normal">Heart</h3>
           <div className="space-y-3">
-            {dailyData.averageHeartRate !== null && (
-              <div>
-                <div className="text-[#969696] text-sm">Average HR</div>
-                <div className="text-[#c8c8c8] text-2xl font-normal">
-                  {Math.round(dailyData.averageHeartRate)} bpm
-                </div>
-              </div>
-            )}
-            {dailyData.restingHeartRate !== null && (
+            {dailyData.restingHeartRate !== null ? (
               <div>
                 <div className="text-[#969696] text-sm">Resting HR</div>
-                <div className="text-[#c8c8c8] text-xl font-normal">
+                <div className="text-[#c8c8c8] text-2xl font-normal">
                   {Math.round(dailyData.restingHeartRate)} bpm
                 </div>
               </div>
-            )}
-            {dailyData.minHeartRate !== null && (
-              <div>
-                <div className="text-[#969696] text-sm">Min HR</div>
-                <div className="text-[#c8c8c8] text-xl font-normal">
-                  {Math.round(dailyData.minHeartRate)} bpm
-                </div>
-              </div>
-            )}
-            {dailyData.maxHeartRate !== null && (
-              <div>
-                <div className="text-[#969696] text-sm">Max HR</div>
-                <div className="text-[#c8c8c8] text-xl font-normal">
-                  {Math.round(dailyData.maxHeartRate)} bpm
-                </div>
-              </div>
-            )}
-            {dailyData.averageHeartRate === null &&
-             dailyData.restingHeartRate === null &&
-             dailyData.minHeartRate === null &&
-             dailyData.maxHeartRate === null && (
+            ) : (
               <div className="text-[#969696] text-sm">No heart data available</div>
             )}
           </div>
