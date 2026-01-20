@@ -40,16 +40,16 @@ export default function ActivityRings({
   const strokeWidth = 12;
   const ringSpacing = strokeWidth + 4;
   
-  // Calculate circumference per ring radius
-  const standCircumference = 2 * Math.PI * standRadius;
-  const exerciseCircumference = 2 * Math.PI * exerciseRadius;
-  const moveCircumference = 2 * Math.PI * moveRadius;
-  
   // Ring positions (concentric circles)
   // Stand is innermost, Move is outermost
   const standRadius = radius;
   const exerciseRadius = radius + ringSpacing;
   const moveRadius = radius + ringSpacing * 2;
+  
+  // Calculate circumference per ring radius
+  const standCircumference = 2 * Math.PI * standRadius;
+  const exerciseCircumference = 2 * Math.PI * exerciseRadius;
+  const moveCircumference = 2 * Math.PI * moveRadius;
   
   // Calculate max radius to ensure everything fits
   const maxRadius = moveRadius + strokeWidth / 2;
