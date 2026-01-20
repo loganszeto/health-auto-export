@@ -40,8 +40,10 @@ export default function ActivityRings({
   const strokeWidth = 12;
   const ringSpacing = strokeWidth + 4;
   
-  // Calculate circumference
-  const circumference = 2 * Math.PI * radius;
+  // Calculate circumference per ring radius
+  const standCircumference = 2 * Math.PI * standRadius;
+  const exerciseCircumference = 2 * Math.PI * exerciseRadius;
+  const moveCircumference = 2 * Math.PI * moveRadius;
   
   // Ring positions (concentric circles)
   // Stand is innermost, Move is outermost
@@ -78,8 +80,8 @@ export default function ActivityRings({
           fill="none"
           stroke={moveColor}
           strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference * (1 - moveProgress)}
+          strokeDasharray={moveCircumference}
+          strokeDashoffset={moveCircumference * (1 - moveProgress)}
           strokeLinecap="round"
           className="transition-all duration-500"
         />
@@ -100,8 +102,8 @@ export default function ActivityRings({
           fill="none"
           stroke={exerciseColor}
           strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference * (1 - exerciseProgress)}
+          strokeDasharray={exerciseCircumference}
+          strokeDashoffset={exerciseCircumference * (1 - exerciseProgress)}
           strokeLinecap="round"
           className="transition-all duration-500"
         />
@@ -122,8 +124,8 @@ export default function ActivityRings({
           fill="none"
           stroke={standColor}
           strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference * (1 - standProgress)}
+          strokeDasharray={standCircumference}
+          strokeDashoffset={standCircumference * (1 - standProgress)}
           strokeLinecap="round"
           className="transition-all duration-500"
         />
