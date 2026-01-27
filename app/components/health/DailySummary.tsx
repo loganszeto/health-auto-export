@@ -19,10 +19,10 @@ export default function DailySummary({
   canGoNext,
 }: DailySummaryProps) {
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString + 'T00:00:00');
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    const year = date.getFullYear();
+    const [year, month, day] = dateString.split('-').map(Number);
+    if (!year || !month || !day) {
+      return dateString;
+    }
     return `${month} - ${day} - ${year}`;
   };
 

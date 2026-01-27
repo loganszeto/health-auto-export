@@ -49,8 +49,11 @@ export default function TimeSeriesChart({ data }: TimeSeriesChartProps) {
   
   // Prepare chart data
   const labels = data.map(d => {
-    const date = new Date(d.date + 'T00:00:00');
-    return date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' }); // Changed to 1/1 format
+    const [year, month, day] = d.date.split('-').map(Number);
+    if (!year || !month || !day) {
+      return d.date;
+    }
+    return `${month}/${day}`;
   });
   
   // Map data - use 0 for null values to ensure lines connect

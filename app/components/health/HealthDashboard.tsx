@@ -18,11 +18,7 @@ export default function HealthDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch data after component mounts
-    const timer = setTimeout(() => {
-      fetchHealthData();
-    }, 100);
-    return () => clearTimeout(timer);
+    fetchHealthData();
   }, []);
 
   useEffect(() => {
@@ -55,11 +51,14 @@ export default function HealthDashboard() {
   }, [rawData]);
 
   const fetchHealthData = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/data?days=30');
+      const response = await fetch('/api/data?days=30', { signal: controller.signal });
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -75,9 +74,14 @@ export default function HealthDashboard() {
         setRawData([]);
       }
     } catch (err) {
-      setError(`Error loading health data: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setError('Request timed out. Please check your connection and try again.');
+      } else {
+        setError(`Error loading health data: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      }
       setRawData([]);
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
